@@ -41,26 +41,26 @@ def get_comments():
     return {'data' : my_posts}
 
 #post method 
-@app.post("/posts", status_code=status.HTTP_201_CREATED)
-def create_comments(post: Post):
-    post_dict = post.dict()
-    post_dict['id'] = randrange(0, 1000000)
-    my_posts.append(post_dict)
+@app.post("/posts", status_code=status.HTTP_201_CREATED) #including the right error code assigned with creating in CRUD, which is error 201
+def create_comments(post: Post): #creating a vague array of post to catch any post made by the user outside the one we provided
+    post_dict = post.dict() #make that post a doctionary and assign it to this function
+    post_dict['id'] = randrange(0, 1000000) #using randrange to generate a random number between 0 - 1000000 for the id
+    my_posts.append(post_dict) #appending it with the original post
     return {"mon reponse" : post_dict}
 
 # getting specific post using id
 @app.get('/posts/{id}')
-def get_specific_comment(id : int):
-    post = find_post(id)
+def get_specific_comment(id : int): #passing int instructs any object passed to the ID as an integer
+    post = find_post(id) #assigning the function earlier created that interated through posts for ID and passing it to the post
     if not post:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                             detail = f'post with id : {id} was not found')
     return {"la detail" : post}
 
 # deleting specific post using id
-@app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT)
-def delete_comment(id: int):
-    index = post_index(id)
+@app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT) #including the right error code assigned with deleting in CRUD, which is error 204
+def delete_comment(id: int): #passing int instructs any object passed to the ID as an integer
+    index = post_index(id) #assigning the function earlier created that enumerated ID value in post and passing it to the post_index
     if not index:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'comment with id : {id} is not on database')
@@ -69,8 +69,8 @@ def delete_comment(id: int):
 
 # updating comment
 @app.put('/posts/{id}')
-def update_comment(id: int, post: Post):
-    index = post_index(id)
+def update_comment(id: int, post: Post): #passing int instructs any object passed to the ID as an integer && creating a vague post to catch any input outside what we provided for the user
+    index = post_index(id) #assigning the function earlier created that enumerated ID value in post and passing it to the post_index
     if not index:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"comment with id : {id} is not on database")
