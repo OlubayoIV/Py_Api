@@ -50,8 +50,8 @@ def root():
 #get method using root ('/comment')
 @app.get("/posts")
 def get_comments():
-    cursor.execute('''SELECT * FROM posts''')
-    posts = cursor.fetchall()
+    cursor.execute('''SELECT * FROM posts''') #passing a sql code to read the table initially created in pgadmin
+    posts = cursor.fetchall() #fetching all data as i require all content of the table and passing it into a variable
     return {'data' : posts}
 
 #post method 
