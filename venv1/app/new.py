@@ -3,6 +3,8 @@ from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
 from pydantic import BaseModel
 from random import randrange
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 app = FastAPI()
 
@@ -10,8 +12,18 @@ app = FastAPI()
 class Post(BaseModel):
     Name: str
     Job: str
-    rating: Optional[int] = None
-    
+    #rating: Optional[int] = None
+    Published: bool = True
+
+# creating a connection with my pg admmin
+try:
+    conn = psycopg2.connect(host='localhost', database='api_py', user='postgres', password='united1234',
+    cursor_factory=RealDictCursor)
+    cursor = conn.cursor()
+    print('Database connection was succesful!')
+except Exception as error:
+    print('Connection to database failed')
+    print('Error: ', error)
 # my hard coded content body
 my_posts = [{
     "Name" : "Ayo", "Job" : "Software Developer", "Native" : "Yoruba", "Learnt" : "Francais", "id" : 1}, {
@@ -38,7 +50,9 @@ def root():
 #get method using root ('/comment')
 @app.get("/posts")
 def get_comments():
-    return {'data' : my_posts}
+    cursor.execute('''SELECT * FROM posts''')
+    posts = cursor.fetchall()
+    return {'data' : posts}
 
 #post method 
 @app.post("/posts", status_code=status.HTTP_201_CREATED) #including the right error code assigned with creating in CRUD, which is error 201
