@@ -10,10 +10,10 @@ app = FastAPI()
 
 # my schema
 class Post(BaseModel):
-    Name: str
-    Job: str
+    name: str
+    job: str
     #rating: Optional[int] = None
-    Published: bool = True
+    published: bool = True
 
 # creating a connection with my pg admmin
 try:
@@ -57,15 +57,19 @@ def get_comments():
 #post method 
 @app.post("/posts", status_code=status.HTTP_201_CREATED) #including the right error code assigned with creating in CRUD, which is error 201
 def create_comments(post: Post): #creating a vague array of post to catch any post made by the user outside the one we provided
-    post_dict = post.dict() #make that post a doctionary and assign it to this function
-    post_dict['id'] = randrange(0, 1000000) #using randrange to generate a random number between 0 - 1000000 for the id
-    my_posts.append(post_dict) #appending it with the original post
-    return {"mon reponse" : post_dict}
+    cursor.execute('''INSERT INTO posts (name, job, published) VALUES (%s, %s, %s) RETURNING 
+    * ''', #explained in my notes why %s was necessary ahead of the actual values
+                   (post.name, post.job, post.published)) #these are case sensitive and must be in line with the schema even with the case values
+    new_posts = cursor.fetchone() #since i'm sending a post fetchone is the applicable tool
+    conn.commit() #this is like my save button when on pgadmin after creating new entry
+    return {"mon reponse" : new_posts}
 
 # getting specific post using id
 @app.get('/posts/{id}')
 def get_specific_comment(id : int): #passing int instructs any object passed to the ID as an integer
-    post = find_post(id) #assigning the function earlier created that interated through posts for ID and passing it to the post
+    cursor.execute('''SELECT * FROM posts WHERE id = %s''', (str(id))) #convert back to string to enable the %s effective
+    post = cursor.fetchone()
+    #post = find_post(id) #assigning the function earlier created that interated through posts for ID and passing it to the post
     if not post:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                             detail = f'post with id : {id} was not found')
