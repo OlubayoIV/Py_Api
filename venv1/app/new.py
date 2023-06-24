@@ -78,21 +78,26 @@ def get_specific_comment(id : int): #passing int instructs any object passed to 
 # deleting specific post using id
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT) #including the right error code assigned with deleting in CRUD, which is error 204
 def delete_comment(id: int): #passing int instructs any object passed to the ID as an integer
-    index = post_index(id) #assigning the function earlier created that enumerated ID value in post and passing it to the post_index
-    if not index:
+    cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING * ''', (str(id)))
+    supprim = cursor.fetchone()
+    conn.commit()
+    if not supprim:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'comment with id : {id} is not on database')
-    my_posts.pop(index)
+    #my_posts.pop(index)
     return Response(status_code=status.HTTP_204_NO_CONTENT) 
 
 # updating comment
 @app.put('/posts/{id}')
 def update_comment(id: int, post: Post): #passing int instructs any object passed to the ID as an integer && creating a vague post to catch any input outside what we provided for the user
-    index = post_index(id) #assigning the function earlier created that enumerated ID value in post and passing it to the post_index
-    if not index:
+    cursor.execute('''UPDATE posts SET name = %s, job = %s, published = %s WHERE id = %s
+      RETURNING *''', (post.name, post.job, post.published, (str(id))))
+    
+    change = cursor.fetchone()
+    conn.commit()
+
+    if change == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"comment with id : {id} is not on database")
-    post_dict = post.dict()     #to put the post into a dictionary
-    post_dict['id'] = id        #to indicate the id of the post in the dico
-    my_posts[index] = post_dict     #to check and run code if the id matches the index in my_posts
-    return{'data' : post_dict}
+
+    return{'data' : change}
