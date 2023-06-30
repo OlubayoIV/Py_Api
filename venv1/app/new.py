@@ -5,15 +5,10 @@ from pydantic import BaseModel
 from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
+from . import schema
 
 app = FastAPI()
 
-# my schema
-class Post(BaseModel):
-    name: str
-    job: str
-    #rating: Optional[int] = None
-    published: bool = True
 
 # creating a connection with my pg admmin
 try:
@@ -54,9 +49,10 @@ def get_comments():
     posts = cursor.fetchall() #fetching all data as i require all content of the table and passing it into a variable
     return {'data' : posts}
 
+
 #post method 
 @app.post("/posts", status_code=status.HTTP_201_CREATED) #including the right error code assigned with creating in CRUD, which is error 201
-def create_comments(post: Post): #creating a vague array of post to catch any post made by the user outside the one we provided
+def create_comments(post: schema.Post): #creating a vague array of post to catch any post made by the user outside the one we provided
     cursor.execute('''INSERT INTO posts (name, job, published) VALUES (%s, %s, %s) RETURNING 
     * ''', #explained in my notes why %s was necessary ahead of the actual values
                    (post.name, post.job, post.published)) #these are case sensitive and must be in line with the schema even with the case values
@@ -89,7 +85,7 @@ def delete_comment(id: int): #passing int instructs any object passed to the ID 
 
 # updating comment
 @app.put('/posts/{id}')
-def update_comment(id: int, post: Post): #passing int instructs any object passed to the ID as an integer && creating a vague post to catch any input outside what we provided for the user
+def update_comment(id: int, post: schema.Post): #passing int instructs any object passed to the ID as an integer && creating a vague post to catch any input outside what we provided for the user
     cursor.execute('''UPDATE posts SET name = %s, job = %s, published = %s WHERE id = %s
       RETURNING *''', (post.name, post.job, post.published, (str(id))))
     
