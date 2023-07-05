@@ -71,7 +71,7 @@ def create_comments(post: Post): #creating a vague array of post to catch any po
 # getting specific post using id
 @app.get('/posts/{id}')
 def get_specific_comment(id : int): #passing int instructs any object passed to the ID as an integer
-    cursor.execute('''SELECT * FROM posts WHERE id = %s''', (str(id))) #convert back to string to enable the %s effective
+    cursor.execute('''SELECT * FROM posts WHERE id = %s''', (str(id),)) #convert back to string to enable the %s effective
     post = cursor.fetchone()
     #post = find_post(id) #assigning the function earlier created that interated through posts for ID and passing it to the post
     if not post:
@@ -82,7 +82,7 @@ def get_specific_comment(id : int): #passing int instructs any object passed to 
 # deleting specific post using id
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT) #including the right error code assigned with deleting in CRUD, which is error 204
 def delete_comment(id: int): #passing int instructs any object passed to the ID as an integer
-    cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING * ''', (str(id)))
+    cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING * ''', (str(id),))
     supprim = cursor.fetchone()
     conn.commit()
     if not supprim:
