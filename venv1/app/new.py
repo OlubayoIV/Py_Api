@@ -1,24 +1,14 @@
 from typing import Optional, List
 from fastapi import FastAPI, Response, status, HTTPException
 from fastapi.params import Body
-from pydantic import BaseModel
-#from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from . import schemas
+from . import utils, schemas
 
 app = FastAPI()
 
-# my schema
-class Post(BaseModel):
-    name: str
-    job: str
-    #rating: Optional[int] = None
-    published: bool = True
 
-class Users(BaseModel):
-    email: str
-    password: str
+
 
 # creating a connection with my pg admmin
 try:
@@ -63,7 +53,7 @@ def get_comments():
 
 #post method 
 @app.post("/posts", status_code=status.HTTP_201_CREATED) #including the right error code assigned with creating in CRUD, which is error 201
-def create_comments(post: Post): #creating a vague array of post to catch any post made by the user outside the one we provided
+def create_comments(post: schemas.Post): #creating a vague array of post to catch any post made by the user outside the one we provided
     cursor.execute('''INSERT INTO posts (name, job, published) VALUES (%s, %s, %s) RETURNING 
     * ''', #explained in my notes why %s was necessary ahead of the actual values
                    (post.name, post.job, post.published)) #these are case sensitive and must be in line with the schema even with the case values
@@ -96,7 +86,7 @@ def delete_comment(id: int): #passing int instructs any object passed to the ID 
 
 # updating comment
 @app.put('/posts/{id}')
-def update_comment(id: int, post: Post): #passing int instructs any object passed to the ID as an integer && creating a vague post to catch any input outside what we provided for the user
+def update_comment(id: int, post: schemas.Post): #passing int instructs any object passed to the ID as an integer && creating a vague post to catch any input outside what we provided for the user
     cursor.execute('''UPDATE posts SET name = %s, job = %s, published = %s WHERE id = %s
       RETURNING *''', (post.name, post.job, post.published, (str(id))))
     
@@ -110,10 +100,15 @@ def update_comment(id: int, post: Post): #passing int instructs any object passe
     return change
 
 #post for users
-@app.post("/users", status_code=status.HTTP_201_CREATED)
-def create_comments(post: Users):
-    cursor.execute('''INSERT INTO posts (email, password) VALUES (%s, %s) RETURNING 
-    * ''', (post.email, post.password))
-    new_posts = cursor.fetchone() 
+@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UsersOut)
+def create_comments(user: schemas.Users):
+    
+    #completion of hash password sequence
+    hashed_password = utils.hash(user.password)
+    user.password = hashed_password
+
+    cursor.execute('''INSERT INTO users (email, password) VALUES (%s, %s) RETURNING 
+    * ''', (user.email, user.password))
+    new_users = cursor.fetchone() 
     conn.commit() 
-    return new_posts
+    return new_users
