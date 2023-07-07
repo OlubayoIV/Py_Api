@@ -5,10 +5,9 @@ from pydantic import BaseModel
 #from random import randrange
 import psycopg2
 from psycopg2.extras import RealDictCursor
-#from . import schema
+from . import schemas
 
 app = FastAPI()
-
 
 # my schema
 class Post(BaseModel):
@@ -16,6 +15,10 @@ class Post(BaseModel):
     job: str
     #rating: Optional[int] = None
     published: bool = True
+
+class Users(BaseModel):
+    email: str
+    password: str
 
 # creating a connection with my pg admmin
 try:
@@ -55,7 +58,7 @@ def root():
 def get_comments():
     cursor.execute('''SELECT * FROM posts''') #passing a sql code to read the table initially created in pgadmin
     posts = cursor.fetchall() #fetching all data as i require all content of the table and passing it into a variable
-    return {"data" : posts}
+    return posts
 
 
 #post method 
@@ -66,7 +69,7 @@ def create_comments(post: Post): #creating a vague array of post to catch any po
                    (post.name, post.job, post.published)) #these are case sensitive and must be in line with the schema even with the case values
     new_posts = cursor.fetchone() #since i'm sending a post fetchone is the applicable tool
     conn.commit() #this is like my save button when on pgadmin after creating new entry
-    return {"mon reponse" : new_posts}
+    return new_posts
 
 # getting specific post using id
 @app.get('/posts/{id}')
@@ -77,7 +80,7 @@ def get_specific_comment(id : int): #passing int instructs any object passed to 
     if not post:
         raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
                             detail = f'post with id : {id} was not found')
-    return {"la detail" : post}
+    return post
 
 # deleting specific post using id
 @app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT) #including the right error code assigned with deleting in CRUD, which is error 204
@@ -104,4 +107,13 @@ def update_comment(id: int, post: Post): #passing int instructs any object passe
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f"comment with id : {id} is not on database")
 
-    return{'data' : change}
+    return change
+
+#post for users
+@app.post("/users", status_code=status.HTTP_201_CREATED)
+def create_comments(post: Users):
+    cursor.execute('''INSERT INTO posts (email, password) VALUES (%s, %s) RETURNING 
+    * ''', (post.email, post.password))
+    new_posts = cursor.fetchone() 
+    conn.commit() 
+    return new_posts
