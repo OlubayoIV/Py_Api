@@ -4,6 +4,7 @@ from fastapi.params import Body
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from . import utils, schemas
+from .routers import posts, users
 
 app = FastAPI()
 
@@ -37,78 +38,15 @@ def post_index(id):
     for i, p in enumerate(my_posts):
         if p['id'] == id:
             return i
-    
+
+#including router after cleaning up my code  
+app.include_router(posts.router)
+app.include_router(users.router) 
+ 
 #get method using root ('/')
 @app.get("/")
 def root():
     return {'reponse' : 'Salut World'}
 
-#get method using root ('/comment')
-@app.get("/posts")
-def get_comments():
-    cursor.execute('''SELECT * FROM posts''') #passing a sql code to read the table initially created in pgadmin
-    posts = cursor.fetchall() #fetching all data as i require all content of the table and passing it into a variable
-    return posts
 
 
-#post method 
-@app.post("/posts", status_code=status.HTTP_201_CREATED) #including the right error code assigned with creating in CRUD, which is error 201
-def create_comments(post: schemas.Post): #creating a vague array of post to catch any post made by the user outside the one we provided
-    cursor.execute('''INSERT INTO posts (name, job, published) VALUES (%s, %s, %s) RETURNING 
-    * ''', #explained in my notes why %s was necessary ahead of the actual values
-                   (post.name, post.job, post.published)) #these are case sensitive and must be in line with the schema even with the case values
-    new_posts = cursor.fetchone() #since i'm sending a post fetchone is the applicable tool
-    conn.commit() #this is like my save button when on pgadmin after creating new entry
-    return new_posts
-
-# getting specific post using id
-@app.get('/posts/{id}')
-def get_specific_comment(id : int): #passing int instructs any object passed to the ID as an integer
-    cursor.execute('''SELECT * FROM posts WHERE id = %s''', (str(id),)) #convert back to string to enable the %s effective
-    post = cursor.fetchone()
-    #post = find_post(id) #assigning the function earlier created that interated through posts for ID and passing it to the post
-    if not post:
-        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND,
-                            detail = f'post with id : {id} was not found')
-    return post
-
-# deleting specific post using id
-@app.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT) #including the right error code assigned with deleting in CRUD, which is error 204
-def delete_comment(id: int): #passing int instructs any object passed to the ID as an integer
-    cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING * ''', (str(id),))
-    supprim = cursor.fetchone()
-    conn.commit()
-    if not supprim:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f'comment with id : {id} is not on database')
-    #my_posts.pop(index)
-    return Response(status_code=status.HTTP_204_NO_CONTENT) 
-
-# updating comment
-@app.put('/posts/{id}')
-def update_comment(id: int, post: schemas.Post): #passing int instructs any object passed to the ID as an integer && creating a vague post to catch any input outside what we provided for the user
-    cursor.execute('''UPDATE posts SET name = %s, job = %s, published = %s WHERE id = %s
-      RETURNING *''', (post.name, post.job, post.published, (str(id))))
-    
-    change = cursor.fetchone()
-    conn.commit()
-
-    if change == None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"comment with id : {id} is not on database")
-
-    return change
-
-#post for users
-@app.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UsersOut)
-def create_comments(user: schemas.Users):
-    
-    #completion of hash password sequence
-    hashed_password = utils.hash(user.password)
-    user.password = hashed_password
-
-    cursor.execute('''INSERT INTO users (email, password) VALUES (%s, %s) RETURNING 
-    * ''', (user.email, user.password))
-    new_users = cursor.fetchone() 
-    conn.commit() 
-    return new_users
