@@ -4,8 +4,7 @@ from fastapi.params import Body
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from . import utils, schemas
-from .routers import posts, users
-
+from .routers import posts, users, auth
 app = FastAPI()
 
 
@@ -42,7 +41,8 @@ def post_index(id):
 #including router after cleaning up my code  
 app.include_router(posts.router)
 app.include_router(users.router) 
- 
+app.include_router(auth.router)
+
 #get method using root ('/')
 @app.get("/")
 def root():

@@ -18,3 +18,10 @@ class UsersOut(BaseModel):
     email: EmailStr
     id: int
     created_at: datetime
+
+#my schema for user login
+
+class UsersLogin(BaseModel):
+    email : EmailStr
+    password : str
+    

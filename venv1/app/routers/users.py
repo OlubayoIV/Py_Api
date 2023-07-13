@@ -13,9 +13,14 @@ except Exception as error:
     print('Connection to database failed')
     print('Error: ', error)
 
-router = APIRouter()
+#creating router to house prefix and tags to make code cleaner
+router = APIRouter(
+    prefix="/users",
+    tags=['Users']
+)
+
 #post for users
-@router.post("/users", status_code=status.HTTP_201_CREATED, response_model=schemas.UsersOut)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schemas.UsersOut)
 def create_comments(user: schemas.Users):
     
     #completing the hash password sequence
@@ -29,7 +34,7 @@ def create_comments(user: schemas.Users):
     return new_users
 
 
-@router.get('/users/{id}', response_model=schemas.UsersOut)
+@router.get('/{id}', response_model=schemas.UsersOut)
 def get_specific_user(id : int):
     cursor.execute('''SELECT * FROM users WHERE id = %s''', (str(id),))
     user = cursor.fetchone()

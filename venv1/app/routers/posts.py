@@ -13,10 +13,14 @@ except Exception as error:
     print('Connection to database failed')
     print('Error: ', error)
 
-router = APIRouter()
-
+#creating router to house prefix and tags to make code cleaner
+router = APIRouter(
+    prefix='/posts',
+    tags=['Posts']
+)
+ 
 #get method using root ('/comment')
-@router.get("/posts")
+@router.get("/")
 def get_comments():
     cursor.execute('''SELECT * FROM posts''') #passing a sql code to read the table initially created in pgadmin
     posts = cursor.fetchall() #fetching all data as i require all content of the table and passing it into a variable
@@ -24,7 +28,7 @@ def get_comments():
 
 
 #post method 
-@router.post("/posts", status_code=status.HTTP_201_CREATED) #including the right error code assigned with creating in CRUD, which is error 201
+@router.post("/", status_code=status.HTTP_201_CREATED) #including the right error code assigned with creating in CRUD, which is error 201
 def create_comments(post: schemas.Post): #creating a vague array of post to catch any post made by the user outside the one we provided
     cursor.execute('''INSERT INTO posts (name, job, published) VALUES (%s, %s, %s) RETURNING 
     * ''', #explained in my notes why %s was necessary ahead of the actual values
@@ -34,7 +38,7 @@ def create_comments(post: schemas.Post): #creating a vague array of post to catc
     return new_posts
 
 # getting specific post using id
-@router.get('/posts/{id}')
+@router.get('/{id}')
 def get_specific_comment(id : int): #passing int instructs any object passed to the ID as an integer
     cursor.execute('''SELECT * FROM posts WHERE id = %s''', (str(id),)) #convert back to string to enable the %s effective
     post = cursor.fetchone()
@@ -45,7 +49,7 @@ def get_specific_comment(id : int): #passing int instructs any object passed to 
     return post
 
 # deleting specific post using id
-@router.delete('/posts/{id}', status_code=status.HTTP_204_NO_CONTENT) #including the right error code assigned with deleting in CRUD, which is error 204
+@router.delete('/{id}', status_code=status.HTTP_204_NO_CONTENT) #including the right error code assigned with deleting in CRUD, which is error 204
 def delete_comment(id: int): #passing int instructs any object passed to the ID as an integer
     cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING * ''', (str(id),))
     supprim = cursor.fetchone()
@@ -57,7 +61,7 @@ def delete_comment(id: int): #passing int instructs any object passed to the ID 
     return Response(status_code=status.HTTP_204_NO_CONTENT) 
 
 # updating comment
-@router.put('/posts/{id}')
+@router.put('/{id}')
 def update_comment(id: int, post: schemas.Post): #passing int instructs any object passed to the ID as an integer && creating a vague post to catch any input outside what we provided for the user
     cursor.execute('''UPDATE posts SET name = %s, job = %s, published = %s WHERE id = %s
       RETURNING *''', (post.name, post.job, post.published, (str(id))))
