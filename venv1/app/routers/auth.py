@@ -20,7 +20,7 @@ router = APIRouter(
 )
 
 #users login verification and password hashing
-@router.post('/login/')
+@router.post('/login')
 def login(login: schemas.UsersLogin):
 
     cursor.execute('''SELECT * FROM users WHERE email = %s''', (str(login.email),)) #convert back to string to enable the %s effective
@@ -31,7 +31,7 @@ def login(login: schemas.UsersLogin):
                             detail = f'Invalid credential')
     #return login
 
-    if not utils.verify(login.password, user["password"]):
+    if not utils.verify(login.password, user["password"]): #the password was an array that was why i kept getting an internal server error
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Invalid credentials")
     
     return {'token'}
